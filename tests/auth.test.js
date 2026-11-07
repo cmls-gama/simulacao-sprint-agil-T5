@@ -186,6 +186,12 @@ describe('rotas do app real', () => {
     expect((await request(app).delete('/reservas/1')).status).toBe(401);
   });
 
+  test('/docs-api é público', async () => {
+    const res = await request(app).get('/docs-api/').redirects(1);
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('swagger-ui');
+  });
+
   test('GET /login não é público', async () => {
     expect((await request(app).get('/login')).status).toBe(401);
   });

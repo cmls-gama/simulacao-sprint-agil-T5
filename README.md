@@ -17,6 +17,10 @@ npm test
 | `JWT_EXPIRES_IN_SECONDS` | não | Validade do token em segundos (padrão `3600`). |
 | `PORT` | não | Porta (padrão `3000`). |
 
+## Documentação (Swagger)
+
+Com a API rodando, acesse `http://localhost:3000/docs-api` (público). A especificação fica em `openapi.yaml`. Para testar rotas protegidas, faça `POST /login`, clique em **Authorize** e cole o token.
+
 ## Autenticação
 
 > **Atenção: esquema apenas para simulação.** Não há senha nem base de usuários.
@@ -32,7 +36,7 @@ O perfil é derivado do domínio do e-mail (correspondência **exata**; configur
 
 O e-mail é normalizado (trim + minúsculas) e deve ter exatamente um `@`, parte local `[a-z0-9._%+-]+` e domínio sem espaços.
 
-### POST /login (única rota pública)
+### POST /login (público, junto com `/docs-api`)
 
 Request: `{ "email": "ana@admin.com" }`. Campos extras (ex.: `senha`) e o header `Authorization` são ignorados.
 

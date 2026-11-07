@@ -1,0 +1,191 @@
+openapi: 3.0.3
+info:
+  title: Meeting Rooms API
+  version: 1.0.0
+  description: |
+    API de reserva de salas de reunião (dados em memória, autenticação JWT).
+
+    **Esquema de autenticação apenas para simulação:** não há senha nem base de usuários.
+    Qualquer pessoa que conheça um e-mail corporativo pode fazer login como essa pessoa.
+    O perfil vem do domínio do e-mail: `@admin.com` -> `admin`, `@funcionario.com` -> `funcionario`.
+servers:
+  - url: http://localhost:3000
+security:
+  - bearerAuth: []
+tags:
+  - name: Autenticação
+  - name: Salas
+  - name: Reservas
+paths:
+  /login:
+    post:
+      tags: [Autenticação]
+      summary: Autenticar usuário por e-mail corporativo
+      description: |
+        Rota pública (única). O header Authorization e campos extras do corpo (ex.: `senha`) são ignorados.
+        O e-mail é normalizado (trim + minúsculas). O domínio deve ser exatamente `admin.com` ou `funcionario.com`.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              admin:
+                value: { email: ana@admin.com }
+              funcionario:
+                value: { email: joao@funcionario.com }
+      responses:
+        '200':
+          description: Token emitido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: E-mail ausente, não-texto, vazio ou mal formado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroValidacao'
+              example:
+                erro:
+                  codigo: DADOS_INVALIDOS
+                  mensagem: Dados inválidos.
+                  campos:
+                    - campo: email
+                      mensagem: Formato de e-mail inválido.
+        '401':
+          description: E-mail bem formado, mas de domínio não corporativo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+              example:
+                erro:
+                  codigo: CREDENCIAIS_INVALIDAS
+                  mensagem: Credenciais inválidas.
+  /salas/disponibilidade:
+    get:
+      tags: [Salas]
+      summary: Consultar disponibilidade de salas
+      description: Ainda não implementado (retorna 501).
+      responses:
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '501': { $ref: '#/components/responses/NaoImplementado' }
+  /reservas:
+    post:
+      tags: [Reservas]
+      summary: Criar reserva
+      description: Ainda não implementado (retorna 501). Perfis previstos - admin, funcionario.
+      responses:
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/SemPermissao' }
+        '501': { $ref: '#/components/responses/NaoImplementado' }
+  /reservas/{id}:
+    delete:
+      tags: [Reservas]
+      summary: Cancelar reserva
+      description: Ainda não implementado (retorna 501).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/SemPermissao' }
+        '404':
+          description: Rota ou recurso não encontrado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Erro' }
+        '501': { $ref: '#/components/responses/NaoImplementado' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT HS256 obtido em POST /login. Claims: `sub` e `email` (e-mail normalizado),
+        `role` (admin | funcionario), `iat`, `exp`.
+  responses:
+    NaoAutenticado:
+      description: Header ausente, esquema diferente de Bearer, token vazio, malformado, expirado, assinatura inválida ou claims inválidas
+      headers:
+        WWW-Authenticate:
+          schema: { type: string, example: Bearer }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Erro' }
+          example:
+            erro:
+              codigo: NAO_AUTENTICADO
+              mensagem: Autenticação necessária ou token inválido.
+    SemPermissao:
+      description: Perfil sem permissão para a operação
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Erro' }
+          example:
+            erro:
+              codigo: SEM_PERMISSAO
+              mensagem: Você não tem permissão para executar esta operação.
+    NaoImplementado:
+      description: Endpoint ainda não implementado
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Erro' }
+          example:
+            erro:
+              codigo: NAO_IMPLEMENTADO
+              mensagem: Não implementado.
+  schemas:
+    LoginRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          example: ana@admin.com
+          description: E-mail corporativo (@admin.com ou @funcionario.com)
+    LoginResponse:
+      type: object
+      required: [token, tipo, expiraEm]
+      properties:
+        token: { type: string }
+        tipo: { type: string, example: Bearer }
+        expiraEm:
+          type: integer
+          example: 3600
+          description: Validade em segundos
+    Erro:
+      type: object
+      required: [erro]
+      properties:
+        erro:
+          type: object
+          required: [codigo, mensagem]
+          properties:
+            codigo: { type: string, example: NAO_AUTENTICADO }
+            mensagem: { type: string }
+    ErroValidacao:
+      type: object
+      required: [erro]
+      properties:
+        erro:
+          type: object
+          required: [codigo, mensagem, campos]
+          properties:
+            codigo: { type: string, example: DADOS_INVALIDOS }
+            mensagem: { type: string }
+            campos:
+              type: array
+              items:
+                type: object
+                required: [campo, mensagem]
+                properties:
+                  campo: { type: string, example: email }
+                  mensagem: { type: string }

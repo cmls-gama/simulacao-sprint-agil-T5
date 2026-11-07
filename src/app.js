@@ -1,4 +1,8 @@
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
+const swaggerUi = require('swagger-ui-express');
+const YAML = require('yaml');
 const authRoutes = require('./routes/auth.routes');
 const roomsRoutes = require('./routes/rooms.routes');
 const bookingsRoutes = require('./routes/bookings.routes');
@@ -7,7 +11,9 @@ const { ErroApp, enviarErro } = require('./utils/erros');
 
 const app = express();
 
-// Única rota pública.
+// Rotas públicas: /login e a documentação (/docs-api).
+const especificacao = YAML.parse(fs.readFileSync(path.join(__dirname, '..', 'openapi.yaml'), 'utf8'));
+app.use('/docs-api', swaggerUi.serve, swaggerUi.setup(especificacao));
 app.use('/login', express.json(), authRoutes);
 
 // Tudo abaixo exige autenticação (inclusive rotas inexistentes).
