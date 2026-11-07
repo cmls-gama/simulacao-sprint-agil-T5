@@ -66,6 +66,75 @@ paths:
                 erro:
                   codigo: CREDENCIAIS_INVALIDAS
                   mensagem: Credenciais inválidas.
+  /salas:
+    get:
+      tags: [Salas]
+      summary: Listar todas as salas
+      description: Disponível para os perfis admin e funcionario.
+      responses:
+        '200':
+          description: Lista de salas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Sala'
+              example:
+                - { id: 1, nome: Sala Alfa, capacidade: 6, recursos: [] }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+    post:
+      tags: [Salas]
+      summary: Cadastrar sala (somente admin)
+      description: |
+        Ordem de avaliação: 401 (token) -> 403 (perfil) -> 400 (validação) -> 409 (nome duplicado) -> 201.
+
+        Regras: `nome` é aparado e tem espaços internos colapsados (máx. 100 caracteres) e é único sem diferenciar maiúsculas/minúsculas (acentos contam).
+        `capacidade` é número inteiro de 1 a 500. `recursos` é opcional (lista de textos não vazios; duplicatas ignorando maiúsculas são removidas).
+        Campos desconhecidos são ignorados.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriarSalaRequest'
+            example:
+              nome: Sala Delta
+              capacidade: 8
+              recursos: [Projetor, TV]
+      responses:
+        '201':
+          description: Sala criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sala'
+              example: { id: 4, nome: Sala Delta, capacidade: 8, recursos: [Projetor, TV] }
+        '400':
+          description: Dados inválidos (todos os campos inválidos são listados)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroValidacao'
+              example:
+                erro:
+                  codigo: DADOS_INVALIDOS
+                  mensagem: Dados inválidos.
+                  campos:
+                    - campo: capacidade
+                      mensagem: A capacidade é obrigatória e deve ser um número inteiro entre 1 e 500.
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/SemPermissao' }
+        '409':
+          description: Já existe sala com esse nome
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+              example:
+                erro:
+                  codigo: SALA_DUPLICADA
+                  mensagem: Já existe uma sala cadastrada com o nome "Sala Alfa".
   /salas/disponibilidade:
     get:
       tags: [Salas]
@@ -143,6 +212,35 @@ components:
               codigo: NAO_IMPLEMENTADO
               mensagem: Não implementado.
   schemas:
+    Sala:
+      type: object
+      required: [id, nome, capacidade, recursos]
+      properties:
+        id: { type: integer, example: 4 }
+        nome: { type: string, example: Sala Delta }
+        capacidade: { type: integer, example: 8 }
+        recursos:
+          type: array
+          items: { type: string }
+          example: [Projetor, TV]
+    CriarSalaRequest:
+      type: object
+      required: [nome, capacidade]
+      properties:
+        nome:
+          type: string
+          maxLength: 100
+          example: Sala Delta
+        capacidade:
+          type: integer
+          minimum: 1
+          maximum: 500
+          example: 8
+        recursos:
+          type: array
+          nullable: true
+          items: { type: string, minLength: 1 }
+          example: [Projetor, TV]
     LoginRequest:
       type: object
       required: [email]
