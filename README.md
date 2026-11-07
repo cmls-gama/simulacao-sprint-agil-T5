@@ -70,6 +70,24 @@ router.post('/', exigirPerfil('admin', 'funcionario'), handler);     // reservas
 
 Perfil insuficiente → **403 `SEM_PERMISSAO`**.
 
+## Reservas
+
+### POST /reservas
+
+Cria uma reserva para uma sala existente e ativa. Apenas os perfis `admin` e `funcionario` podem reservar. Envie `salaId`, `data` (`AAAA-MM-DD`), `inicio` e `fim` (`HH:mm`) e `titulo`. Datas e horários são interpretados no fuso de Brasília; o início deve ser futuro e o fim posterior ao início no mesmo dia. O responsável é obtido exclusivamente do token.
+
+```json
+{
+  "salaId": 1,
+  "data": "2099-12-31",
+  "inicio": "10:00",
+  "fim": "11:00",
+  "titulo": "Planejamento do Time X"
+}
+```
+
+Uma criação retorna **201** com `id`, sala, data, horários, título e e-mail do responsável. Campos ausentes ou inválidos e horários passados retornam **400**; sala inexistente ou inativa retorna **404**; sobreposição com outra reserva da mesma sala retorna **409**. Intervalos adjacentes são permitidos.
+
 ## Formato padrão de erro
 
 Todos os erros usam (helper em `src/utils/erros.js`; `campos` apenas em 400):
@@ -84,4 +102,4 @@ Todos os erros usam (helper em `src/utils/erros.js`; `campos` apenas em 400):
 }
 ```
 
-Códigos atuais: `DADOS_INVALIDOS` (400), `NAO_AUTENTICADO` (401), `CREDENCIAIS_INVALIDAS` (401), `SEM_PERMISSAO` (403), `ROTA_NAO_ENCONTRADA` (404), `ERRO_INTERNO` (500), `NAO_IMPLEMENTADO` (501).
+Códigos atuais incluem `DADOS_INVALIDOS` (400), `NAO_AUTENTICADO` (401), `CREDENCIAIS_INVALIDAS` (401), `SEM_PERMISSAO` (403), `ROTA_NAO_ENCONTRADA` / `SALA_NAO_ENCONTRADA` (404), `HORARIO_INDISPONIVEL` (409), `ERRO_INTERNO` (500) e `NAO_IMPLEMENTADO` (501).
