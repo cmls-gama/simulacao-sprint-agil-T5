@@ -86,7 +86,8 @@ Cria uma reserva para uma sala existente e ativa. Apenas os perfis `admin` e `fu
 }
 ```
 
-Uma criação retorna **201** com `id`, sala, data, horários, título e e-mail do responsável. Campos ausentes ou inválidos e horários passados retornam **400**; sala inexistente ou inativa retorna **404**; sobreposição com outra reserva da mesma sala retorna **409**. Intervalos adjacentes são permitidos.
+Uma criação retorna **201** com `id`, sala, data, horários, título e e-mail do responsável. Campos ausentes ou inválidos e horários passados retornam **400**; sala inexistente ou inativa retorna **404**; sobreposição com outra reserva da mesma sala e data retorna **409 `HORARIO_INDISPONIVEL`**, com mensagem indicando nome da sala e intervalo ocupado. Os intervalos são semiabertos (`início <= horário < fim`), então reservas adjacentes são permitidas. A verificação e gravação são síncronas no processo para evitar que requisições simultâneas criem reservas conflitantes.
+
 ## Salas
 
 Modelo: `{ id, nome, capacidade, recursos }`. Há 3 salas de exemplo (ids 1 a 3); novas salas recebem o maior id + 1.
@@ -148,5 +149,4 @@ Todos os erros usam (helper em `src/utils/erros.js`; `campos` apenas em 400):
 }
 ```
 
-Códigos atuais incluem `DADOS_INVALIDOS` (400), `NAO_AUTENTICADO` (401), `CREDENCIAIS_INVALIDAS` (401), `SEM_PERMISSAO` (403), `ROTA_NAO_ENCONTRADA` / `SALA_NAO_ENCONTRADA` (404), `HORARIO_INDISPONIVEL` (409), `ERRO_INTERNO` (500) e `NAO_IMPLEMENTADO` (501).
-Códigos atuais: `DADOS_INVALIDOS` (400), `NAO_AUTENTICADO` (401), `CREDENCIAIS_INVALIDAS` (401), `SEM_PERMISSAO` (403), `SALA_DUPLICADA` (409), `ROTA_NAO_ENCONTRADA` (404), `ERRO_INTERNO` (500), `NAO_IMPLEMENTADO` (501).
+Códigos atuais incluem `DADOS_INVALIDOS` (400), `NAO_AUTENTICADO` / `CREDENCIAIS_INVALIDAS` (401), `SEM_PERMISSAO` (403), `ROTA_NAO_ENCONTRADA` / `SALA_NAO_ENCONTRADA` (404), `SALA_DUPLICADA` / `HORARIO_INDISPONIVEL` (409), `ERRO_INTERNO` (500) e `NAO_IMPLEMENTADO` (501).
