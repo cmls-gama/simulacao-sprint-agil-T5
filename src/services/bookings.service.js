@@ -74,16 +74,21 @@ function criarReserva(dados, usuario) {
     throw new ErroApp(404, 'SALA_NAO_ENCONTRADA', 'Sala não encontrada ou inativa.');
   }
 
-  const conflito = store.reservas.some((reserva) =>
+  const conflito = store.reservas.find((reserva) =>
     reserva.salaId === idSala &&
     reserva.data === data &&
     inicio < reserva.fim &&
     reserva.inicio < fim
   );
   if (conflito) {
-    throw new ErroApp(409, 'HORARIO_INDISPONIVEL', 'A sala já está reservada nesse horário.');
+    throw new ErroApp(
+      409,
+      'HORARIO_INDISPONIVEL',
+      `${sala.nome} já reservada das ${conflito.inicio} às ${conflito.fim}.`,
+    );
   }
 
+  // A verificação e gravação são síncronas, sem yield entre elas, no processo Node.
   const reserva = {
     id: randomUUID(),
     salaId: idSala,
@@ -101,8 +106,4 @@ function criarReserva(dados, usuario) {
   };
 }
 
-function cancelarReserva(/* id, usuario */) {
-  throw new Error('Não implementado');
-}
-
-module.exports = { criarReserva, cancelarReserva, store };
+module.exports = { criarReserva, store };

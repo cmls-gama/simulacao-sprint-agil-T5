@@ -197,14 +197,16 @@ paths:
                   codigo: SALA_NAO_ENCONTRADA
                   mensagem: Sala não encontrada ou inativa.
         '409':
-          description: A sala já está reservada no intervalo solicitado
+          description: |
+            A sala já está reservada no intervalo solicitado. A mensagem identifica a sala e o período em conflito.
+            Intervalos adjacentes são permitidos; uma reserva recusada não altera a agenda.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Erro' }
               example:
                 erro:
                   codigo: HORARIO_INDISPONIVEL
-                  mensagem: A sala já está reservada nesse horário.
+                  mensagem: Sala Alfa já reservada das 09:00 às 10:00.
   /reservas/{id}:
     delete:
       tags: [Reservas]
