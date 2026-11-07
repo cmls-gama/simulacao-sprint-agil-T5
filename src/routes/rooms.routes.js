@@ -1,12 +1,11 @@
 const { Router } = require('express');
-const auth = require('../middlewares/auth');
-// const roomsService = require('../services/rooms.service');
+const { enviarErro } = require('../utils/erros');
 
 const router = Router();
 
-// GET /salas/disponibilidade
-router.get('/disponibilidade', auth, (req, res) => {
-  res.status(501).json({ erro: 'Não implementado' });
+// GET /salas/disponibilidade (autenticação aplicada globalmente em app.js)
+router.get('/disponibilidade', (req, res) => {
+  enviarErro(res, 501, 'NAO_IMPLEMENTADO', 'Não implementado.');
 });
 
 module.exports = router;

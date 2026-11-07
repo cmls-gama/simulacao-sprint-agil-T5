@@ -1,17 +1,16 @@
 const { Router } = require('express');
-const auth = require('../middlewares/auth');
-// const bookingsService = require('../services/bookings.service');
+const { enviarErro } = require('../utils/erros');
 
 const router = Router();
 
-// POST /reservas
-router.post('/', auth, (req, res) => {
-  res.status(501).json({ erro: 'Não implementado' });
+// POST /reservas (autenticação aplicada globalmente em app.js)
+router.post('/', (req, res) => {
+  enviarErro(res, 501, 'NAO_IMPLEMENTADO', 'Não implementado.');
 });
 
 // DELETE /reservas/:id
-router.delete('/:id', auth, (req, res) => {
-  res.status(501).json({ erro: 'Não implementado' });
+router.delete('/:id', (req, res) => {
+  enviarErro(res, 501, 'NAO_IMPLEMENTADO', 'Não implementado.');
 });
 
 module.exports = router;
