@@ -70,6 +70,29 @@ router.post('/', exigirPerfil('admin', 'funcionario'), handler);     // reservas
 
 Perfil insuficiente → **403 `SEM_PERMISSAO`**.
 
+## Salas
+
+Modelo: `{ id, nome, capacidade, recursos }`. Há 3 salas de exemplo (ids 1 a 3); novas salas recebem o maior id + 1.
+
+### POST /salas (somente `admin`)
+
+Request: `{ "nome": "Sala Delta", "capacidade": 8, "recursos": ["Projetor", "TV"] }` → **201** com a sala criada.
+
+Regras de validação:
+
+- `nome`: obrigatório, texto. Aparado e com espaços internos colapsados; no máximo 100 caracteres. Único sem diferenciar maiúsculas/minúsculas (acentos **não** são ignorados), incluindo as salas de exemplo. Guarda a grafia normalizada original.
+- `capacidade`: obrigatória, número JSON inteiro de 1 a 500 (`"10"`, `2.5`, `null`, `0` e negativos são inválidos).
+- `recursos`: opcional (ausente, `null` ou `[]` → `[]`). Lista de textos; itens aparados, vazios/não-texto são inválidos; duplicatas (ignorando maiúsculas) removidas mantendo a primeira.
+- Campos desconhecidos são ignorados. Corpo ausente ou que não seja objeto → 400 listando `nome` e `capacidade`.
+
+Ordem de avaliação (para no primeiro erro): **401** (sem token válido) → **403** `SEM_PERMISSAO` (perfil ≠ admin, mesmo com corpo inválido) → **400** `DADOS_INVALIDOS` (todos os campos inválidos em `campos`) → **409** `SALA_DUPLICADA` → **201**.
+
+Observação: o parser de JSON roda depois da autenticação, mas antes da checagem de perfil. Assim, um JSON malformado enviado por um `funcionario` retorna 400 (e não 403).
+
+### GET /salas (`admin` e `funcionario`)
+
+Lista todas as salas, no mesmo formato. **200**, ou **401** sem token.
+
 ## Formato padrão de erro
 
 Todos os erros usam (helper em `src/utils/erros.js`; `campos` apenas em 400):
@@ -84,4 +107,4 @@ Todos os erros usam (helper em `src/utils/erros.js`; `campos` apenas em 400):
 }
 ```
 
-Códigos atuais: `DADOS_INVALIDOS` (400), `NAO_AUTENTICADO` (401), `CREDENCIAIS_INVALIDAS` (401), `SEM_PERMISSAO` (403), `ROTA_NAO_ENCONTRADA` (404), `ERRO_INTERNO` (500), `NAO_IMPLEMENTADO` (501).
+Códigos atuais: `DADOS_INVALIDOS` (400), `NAO_AUTENTICADO` (401), `CREDENCIAIS_INVALIDAS` (401), `SEM_PERMISSAO` (403), `SALA_DUPLICADA` (409), `ROTA_NAO_ENCONTRADA` (404), `ERRO_INTERNO` (500), `NAO_IMPLEMENTADO` (501).
