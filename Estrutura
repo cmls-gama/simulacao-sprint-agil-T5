@@ -1,0 +1,31 @@
+Estrutura sugerida
+meeting-rooms-api/
+├── package.json
+├── .env.example          # JWT_SECRET, PORT
+├── src/
+│   ├── server.js         # sobe o servidor (listen)
+│   ├── app.js            # monta o Express, middlewares e rotas
+│   ├── routes/
+│   │   ├── rooms.routes.js         # GET /salas/disponibilidade
+│   │   └── bookings.routes.js      # POST /reservas, DELETE /reservas/:id
+│   ├── middlewares/
+│   │   └── auth.js                 # valida o JWT (401/403)
+│   ├── services/
+│   │   ├── rooms.service.js        # regras de disponibilidade
+│   │   └── bookings.service.js     # regra de conflito, cancelamento
+│   ├── repositories/
+│   │   └── memory.store.js         # salas e reservas em arrays
+│   └── utils/
+│       └── validators.js           # validação de datas e campos
+└── tests/
+Por que dividir assim
+
+A ideia é uma responsabilidade por pasta, e isso ajuda diretamente na divisão do trabalho:
+
+routes só recebe a requisição e devolve a resposta.
+services guarda a regra de negócio (ex: “duas reservas se sobrepõem?”).
+repositories é o único lugar que sabe que os dados estão em memória.
+
+Na prática, cada Dev pega uma US e mexe em arquivos diferentes, então o risco de conflito de merge cai muito. Além disso, se amanhã o cliente pedir um banco de verdade, só o repository muda.
+
+O Tech Lead precisa subir o esqueleto (app.js, server.js e o store com salas de exemplo) primeiro, para ninguém ficar bloqueado esperando.
