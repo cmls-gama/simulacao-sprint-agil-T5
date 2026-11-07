@@ -181,7 +181,7 @@ describe('rotas do app real', () => {
   });
 
   test('rotas existentes exigem token', async () => {
-    expect((await request(app).get('/salas/disponibilidade')).status).toBe(401);
+    expect((await request(app).get('/salas')).status).toBe(401);
     expect((await request(app).post('/reservas')).status).toBe(401);
     expect((await request(app).delete('/reservas/1')).status).toBe(401);
   });

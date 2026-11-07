@@ -135,14 +135,78 @@ paths:
                 erro:
                   codigo: SALA_DUPLICADA
                   mensagem: Já existe uma sala cadastrada com o nome "Sala Alfa".
-  /salas/disponibilidade:
+  /salas/{id}/disponibilidade:
     get:
       tags: [Salas]
-      summary: Consultar disponibilidade de salas
-      description: Ainda não implementado (retorna 501).
+      summary: Consultar a agenda de uma sala em uma data
+      description: |
+        Disponível para admin e funcionario (qualquer funcionário vê quem reservou).
+        Ordem de avaliação: 401 (token) -> 404 (sala inexistente/inativa; o id deve casar com a regex abaixo) -> 400 (data ausente, repetida ou inválida) -> 200.
+
+        Lista as reservas da sala na data, ordenadas por inicio, depois fim e, em empate, pela ordem de criação.
+        Reservas com status cancelada não aparecem. Dia sem reservas retorna 200 com reservas vazio.
+        Datas passadas são aceitas. Horários no fuso America/Sao_Paulo.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, pattern: '^[1-9][0-9]*$', example: '1' }
+        - name: data
+          in: query
+          required: true
+          description: Data no formato AAAA-MM-DD (data real do calendário).
+          schema: { type: string, example: '2026-11-10' }
       responses:
+        '200':
+          description: Agenda da sala na data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgendaSala'
+              examples:
+                comReservas:
+                  summary: Dia com reservas
+                  value:
+                    sala: { id: 1, nome: Sala Alfa }
+                    data: '2026-11-10'
+                    fuso: America/Sao_Paulo
+                    reservas:
+                      - id: 8ff8d8db-10e2-4903-98b7-bb89c2bccf77
+                        inicio: '09:00'
+                        fim: '10:30'
+                        responsavel: ana@admin.com
+                        titulo: Planning
+                semReservas:
+                  summary: Dia livre
+                  value:
+                    sala: { id: 1, nome: Sala Alfa }
+                    data: '2026-11-11'
+                    fuso: America/Sao_Paulo
+                    reservas: []
+        '400':
+          description: Parâmetro data ausente, repetido ou inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroValidacao'
+              example:
+                erro:
+                  codigo: DADOS_INVALIDOS
+                  mensagem: Dados inválidos.
+                  campos:
+                    - campo: data
+                      mensagem: Informe uma data válida no formato AAAA-MM-DD.
         '401': { $ref: '#/components/responses/NaoAutenticado' }
-        '501': { $ref: '#/components/responses/NaoImplementado' }
+        '404':
+          description: Sala inexistente, inativa ou id inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+              example:
+                erro:
+                  codigo: SALA_NAO_ENCONTRADA
+                  mensagem: Sala não encontrada ou inativa.
   /reservas:
     post:
       tags: [Reservas]
@@ -276,6 +340,31 @@ components:
           type: array
           items: { type: string }
           example: [Projetor, TV]
+    ReservaAgenda:
+      type: object
+      required: [id, inicio, fim, responsavel, titulo]
+      properties:
+        id: { type: string, format: uuid }
+        inicio: { type: string, example: '09:00' }
+        fim: { type: string, example: '10:30' }
+        responsavel: { type: string, example: ana@admin.com }
+        titulo: { type: string, example: Planning }
+    AgendaSala:
+      type: object
+      required: [sala, data, fuso, reservas]
+      properties:
+        sala:
+          type: object
+          required: [id, nome]
+          properties:
+            id: { type: integer, example: 1 }
+            nome: { type: string, example: Sala Alfa }
+        data: { type: string, example: '2026-11-10' }
+        fuso: { type: string, example: America/Sao_Paulo }
+        reservas:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReservaAgenda'
     CriarSalaRequest:
       type: object
       required: [nome, capacidade]

@@ -27,4 +27,12 @@ function resetar() {
   ultimoId = Math.max(0, ...salas.map((s) => s.id));
 }
 
-module.exports = { salas, reservas, adicionarSala, resetar };
+function buscarSalaPorId(id) {
+  return salas.find((s) => s.id === id);
+}
+
+function listarReservasPorSalaEData(salaId, data) {
+  return reservas.filter((r) => r.salaId === salaId && r.data === data);
+}
+
+module.exports = { salas, reservas, adicionarSala, resetar, buscarSalaPorId, listarReservasPorSalaEData };
