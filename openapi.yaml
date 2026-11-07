@@ -147,11 +147,64 @@ paths:
     post:
       tags: [Reservas]
       summary: Criar reserva
-      description: Ainda não implementado (retorna 501). Perfis previstos - admin, funcionario.
+      description: |
+        Cria uma reserva para uma sala ativa. Aceita os perfis `admin` e `funcionario`.
+        Data no formato `AAAA-MM-DD` e horários no formato `HH:mm`, considerando o horário de Brasília.
+        Reservas com intervalos adjacentes são permitidas; intervalos sobrepostos na mesma sala retornam conflito.
+        O responsável é sempre o usuário autenticado.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservaRequest'
+            example:
+              salaId: 1
+              data: '2099-12-31'
+              inicio: '10:00'
+              fim: '11:00'
+              titulo: Planejamento do Time X
       responses:
+        '201':
+          description: Reserva criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reserva'
+              example:
+                id: 8ff8d8db-10e2-4903-98b7-bb89c2bccf77
+                salaId: 1
+                sala: { id: 1, nome: Sala Alfa }
+                data: '2099-12-31'
+                inicio: '10:00'
+                fim: '11:00'
+                titulo: Planejamento do Time X
+                responsavel: joao@funcionario.com
+        '400':
+          description: Campos ausentes, inválidos ou reserva no passado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroValidacao' }
         '401': { $ref: '#/components/responses/NaoAutenticado' }
         '403': { $ref: '#/components/responses/SemPermissao' }
-        '501': { $ref: '#/components/responses/NaoImplementado' }
+        '404':
+          description: Sala inexistente ou inativa
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Erro' }
+              example:
+                erro:
+                  codigo: SALA_NAO_ENCONTRADA
+                  mensagem: Sala não encontrada ou inativa.
+        '409':
+          description: A sala já está reservada no intervalo solicitado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Erro' }
+              example:
+                erro:
+                  codigo: HORARIO_INDISPONIVEL
+                  mensagem: A sala já está reservada nesse horário.
   /reservas/{id}:
     delete:
       tags: [Reservas]
@@ -259,6 +312,32 @@ components:
           type: integer
           example: 3600
           description: Validade em segundos
+    ReservaRequest:
+      type: object
+      required: [salaId, data, inicio, fim, titulo]
+      properties:
+        salaId: { type: integer, example: 1, description: Identificador de uma sala ativa }
+        data: { type: string, format: date, example: '2099-12-31' }
+        inicio: { type: string, pattern: '^(?:[01]\d|2[0-3]):[0-5]\d$', example: '10:00' }
+        fim: { type: string, pattern: '^(?:[01]\d|2[0-3]):[0-5]\d$', example: '11:00' }
+        titulo: { type: string, minLength: 1, example: Planejamento do Time X }
+    Reserva:
+      type: object
+      required: [id, salaId, sala, data, inicio, fim, titulo, responsavel]
+      properties:
+        id: { type: string, format: uuid }
+        salaId: { type: integer }
+        sala:
+          type: object
+          required: [id, nome]
+          properties:
+            id: { type: integer }
+            nome: { type: string }
+        data: { type: string, format: date }
+        inicio: { type: string, example: '10:00' }
+        fim: { type: string, example: '11:00' }
+        titulo: { type: string }
+        responsavel: { type: string, format: email, description: E-mail do usuário autenticado }
     Erro:
       type: object
       required: [erro]
