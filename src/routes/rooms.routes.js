@@ -1,5 +1,4 @@
 const { Router } = require('express');
-const { enviarErro } = require('../utils/erros');
 const { exigirPerfil } = require('../middlewares/auth');
 const roomsService = require('../services/rooms.service');
 
@@ -23,9 +22,13 @@ router.post('/', exigirPerfil('admin'), (req, res, next) => {
   }
 });
 
-// GET /salas/disponibilidade (outro card)
-router.get('/disponibilidade', (req, res) => {
-  enviarErro(res, 501, 'NAO_IMPLEMENTADO', 'Não implementado.');
+// GET /salas/:id/disponibilidade?data=YYYY-MM-DD (admin e funcionario)
+router.get('/:id/disponibilidade', exigirPerfil('admin', 'funcionario'), (req, res, next) => {
+  try {
+    res.status(200).json(roomsService.consultarDisponibilidade(req.params.id, req.query.data));
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = router;

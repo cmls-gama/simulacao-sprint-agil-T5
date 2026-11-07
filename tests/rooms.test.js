@@ -273,10 +273,10 @@ describe('ids', () => {
 });
 
 describe('regressão', () => {
-  test('GET /salas/disponibilidade continua 501 com token', async () => {
+  test('o antigo placeholder GET /salas/disponibilidade não existe mais (404 com token)', async () => {
     const res = await request(app).get('/salas/disponibilidade').set('Authorization', func());
-    expect(res.status).toBe(501);
-    expect(res.body.erro.codigo).toBe('NAO_IMPLEMENTADO');
+    expect(res.status).toBe(404);
+    expect(res.body.erro.codigo).toBe('ROTA_NAO_ENCONTRADA');
   });
 
   test('GET /salas/disponibilidade sem token -> 401', async () => {

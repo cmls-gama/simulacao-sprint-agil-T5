@@ -110,6 +110,30 @@ Observação: o parser de JSON roda depois da autenticação, mas antes da checa
 
 Lista todas as salas, no mesmo formato. **200**, ou **401** sem token.
 
+### GET /salas/:id/disponibilidade?data=AAAA-MM-DD (`admin` e `funcionario`)
+
+Mostra a agenda de uma sala em uma data. Qualquer funcionário vê o `responsavel` das reservas dos outros. Substitui o antigo placeholder `GET /salas/disponibilidade` (que não existe mais).
+
+```json
+{
+  "sala": { "id": 1, "nome": "Sala Alfa" },
+  "data": "2026-11-10",
+  "fuso": "America/Sao_Paulo",
+  "reservas": [
+    { "id": "<uuid>", "inicio": "09:00", "fim": "10:30", "responsavel": "ana@admin.com", "titulo": "Planning" }
+  ]
+}
+```
+
+- **Ordem de avaliação:** **401** (sem token válido) → **404** `SALA_NAO_ENCONTRADA` → **400** `DADOS_INVALIDOS` → **200**.
+- **Sala:** o `:id` deve casar com `^[1-9][0-9]*$`; qualquer outro valor (`abc`, `-1`, `1.5`, `0`, `1e0`) ou sala inexistente/inativa (`ativa === false` ou `ativo === false`) → 404. O 404 tem precedência sobre erros de `data`.
+- **`data`:** obrigatória, única, formato estrito `AAAA-MM-DD` e data real do calendário (rejeita `2026-02-30`, `2026-13-01`, `2026-00-10`). Ausente, vazia, repetida ou em outro formato → 400 com `campos: [{ "campo": "data", ... }]`.
+- **Ordenação:** por `inicio` crescente, depois `fim`, depois ordem de criação.
+- **Dia sem reservas:** 200 com `"reservas": []`. Datas passadas e futuras são aceitas.
+- **Fuso:** datas e horários são de Brasília (`America/Sao_Paulo`); uma reserva nunca atravessa a meia-noite.
+- **Canceladas:** reservas com `status === 'cancelada'` não aparecem. Assim o futuro cancelamento funciona tanto marcando o status quanto removendo a reserva do armazenamento.
+- A resposta traz somente os campos listados (sem `salaId`/`data` por reserva) e é somente leitura.
+
 ## Formato padrão de erro
 
 Todos os erros usam (helper em `src/utils/erros.js`; `campos` apenas em 400):
